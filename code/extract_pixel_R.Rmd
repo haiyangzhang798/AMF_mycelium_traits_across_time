@@ -1,0 +1,62 @@
+---
+title: "code_example_pixel_time"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Can we use photos for generating growth pattern and time-series biomass quantification?
+
+
+```{r cars}
+rm(list = ls())
+library(colordistance)
+library(countcolors)
+# set parameters and limits
+# these might need to be adjusted depending on the image color range or lighting
+green.center <- c(0.25, 0.45, 0.25)  # Center color for spherical range 
+# yellow.center<-c(.234,.25,0) # cener for yellow. Note that this might be useful if want to quantify the disease or yellow spot of plant leaf
+upper.rectangular <- c(0.35, 0.55, 0.35) # Lower limit for each of the three color channels
+lower.rectangular <- c(0.1, 0.1, 0) # Upper limit for each of the three color channels
+```
+
+## take one picture as the example
+
+```{r pressure, echo=T}
+green <- countcolors::countColors("Pic_pixel/1.JPG", color.range="spherical", 
+                                  center = green.center, radius = 0.2,
+                                  bg.lower=lower.rectangular, bg.upper=upper.rectangular, plotting = TRUE)
+
+# then we can get the pixel fraction of green area that contribute to the whole picture window, this can be seen as the biomass indicator
+
+green$pixel.fraction
+
+```
+### now if we need to apply this idea into multiple pictures, how could we do?
+
+```{r}
+# if your reading multiple photos in you can use a folder-based method, this can take a lot of computer power so you may want to run it on a server
+#"example" ## in this folder, I have take pictures for one pot for four different times. Across the time, we want to see how the pixel fraction changes. 
+
+frac_pixel <- function(directory = NULL){
+  green_pixel <- countcolors::countColorsInDirectory(directory,color.range="spherical", 
+                                                     center = green.center, radius = 0.2,
+                                                     bg.lower=lower.rectangular, bg.upper=upper.rectangular)
+  
+  
+  green_data<-sapply(green_pixel,`[`,2)
+  data <-do.call(rbind, lapply(green_data, as.data.frame))  
+  colnames(data) <- "Pixel_frac"
+  data$Cal_ID <- rownames(data)
+  data$Cal_ID <-gsub("[^0-9]", "", data$Cal_ID)
+  return(data)
+}
+
+pixel_change_along_time = frac_pixel(directory = "example")
+library(ggplot2)
+ggplot(pixel_change_along_time) + aes(x = Cal_ID, y = Pixel_frac) +
+  geom_point()
+
+```
