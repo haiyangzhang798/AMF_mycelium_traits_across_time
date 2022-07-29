@@ -74,9 +74,11 @@ hyphae_traits_pixel <- read.csv("data/meta_data_202207.csv") %>%
 
 fig2 <- ggplot(hyphae_traits_pixel) + 
   aes(x= Pixel_RR, y = Value, 
-      color = Inoculum_name, shape = Harvest_time) +
-  geom_point( size = 3) + 
-  facet_wrap(~Traits*Inoculum_name, scales = "free")
+      color = Inoculum_name) +
+  geom_point(aes(shape = Harvest_time), size = 3) + 
+  geom_smooth(method='lm', se=FALSE) + 
+  facet_grid(cols=vars(Inoculum_name), 
+             rows=vars(Traits), scales='free_y')
 
 png("output/Fig7_pixel_ResRatio.png", width = 16, height = 12, units = "in", res = 350)
 library(gridExtra)
